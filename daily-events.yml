@@ -1,0 +1,28 @@
+name: Daily Lagos Events Email
+
+on:
+  schedule:
+    # Lagos is UTC+1. GitHub cron can run 10-60+ min late at busy times,
+    # so 05:00 UTC (6:00 AM Lagos) gives a buffer to land before 7 AM.
+    - cron: "0 5 * * *"
+  workflow_dispatch: # lets you run it manually from the Actions tab
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EVENT_FOCUS: ${{ vars.EVENT_FOCUS }}
+        run: python agent.py
